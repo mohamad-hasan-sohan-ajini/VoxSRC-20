@@ -12,6 +12,7 @@ from opts import add_args
 from data_loader import ClassificationVCDS, MetricLearningVCDS, transform
 from model import UniversalSRModel
 from loss import CosFace, PSGE2E, Prototypical
+from utils import save_checkpoint, load_checkpoint
 
 # add argparser functions
 parser = argparse.ArgumentParser(description='Training options')
@@ -55,15 +56,7 @@ feature_extractor = transform(**kwargs).to(device)
 # model
 model = UniversalSRModel(**kwargs)
 model.to(device)
-
-# continue from checkpoint
-if args.model_path:
-    model.load_state_dict(
-        torch.load(
-            args.model_path,
-            map_location=device
-        )
-    )
+load_checkpoint(model, args.model_path, device)
 
 # log
 log = SummaryWriter(args.logdir)
@@ -78,6 +71,7 @@ elif args.criterion == 'prototypical':
 else:
     raise ValueError('args.criterion: no valid criterion function')
 criterion = criterion.to(device)
+load_checkpoint(criterion, args.criterion_path, device)
 
 # optimizer
 optimizer = torch.optim.Adam(
@@ -86,11 +80,12 @@ optimizer = torch.optim.Adam(
         {'params': criterion.parameters(), 'lr': args.criterion_lr}
     ]
 )
+load_checkpoint(optimizer, args.optimizer_path, device)
 
 # training loop
 counter = 0
-for e in range(args.num_epochs):
-    print('-' * 20 + f'epoch: {e+1:02d}' + '-' * 20)
+for epoch in range(args.num_epochs):
+    print('-' * 20 + f'epoch: {epoch+1:02d}' + '-' * 20)
     for x, target in tqdm(dl):
         x = x.to(device)
         x = feature_extractor(x)
@@ -122,16 +117,5 @@ for e in range(args.num_epochs):
         counter += 1
 
     # save model
-    if args.save_model:
-        torch.save(
-            model.state_dict(),
-            f'models/model_{e+1:02d}.pt'
-        )
-        torch.save(
-            criterion.state_dict(),
-            f'models/crit_{e+1:02d}.pt'
-        )
-        torch.save(
-            optimizer.state_dict(),
-            f'models/optim_{e+1:02d}.pt'
-        )
+    if args.save_checkpoint or epoch == args.num_epochs - 1:
+        save_checkpoint(model, criterion, optimizer, epoch)

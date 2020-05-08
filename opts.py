@@ -63,7 +63,7 @@ def common_args(parser):
     # log path
     parser.add_argument('--logdir', default='log', type=str)
     # saving results
-    parser.add_argument('--save-model', action='store_true')
+    parser.add_argument('--save-checkpoint', action='store_true')
     return parser
 
 
@@ -96,6 +96,8 @@ def prototypical_args(parser):
 
 def load_model_args(parser):
     parser.add_argument('--model-path', default='', type=str)
+    parser.add_argument('--criterion-path', default='', type=str)
+    parser.add_argument('--optimizer-path', default='', type=str)
     return parser
 
 
