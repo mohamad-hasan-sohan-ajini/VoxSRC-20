@@ -4,10 +4,16 @@ import argparse
 def common_args(parser):
     # dataset
     parser.add_argument(
-        '--csv-path',
+        '--dev-csv',
         default='/media/aj/wav_train_list.txt',
         type=str,
         help='training csv path'
+    )
+    parser.add_argument(
+        '--eval-csv',
+        default='/media/aj/wav_test_list.txt',
+        type=str,
+        help='testing csv path'
     )
     parser.add_argument('--sample-rate', default=16000, type=int)
     parser.add_argument('--win-length', default=400, type=int)
@@ -41,10 +47,10 @@ def common_args(parser):
         help='polling network type: tap | sap'
     )
     # training hyper parameters
-    parser.add_argument('--lr', default=.01, type=float)
-    parser.add_argument('--batch-size', default=8, type=int)
+    parser.add_argument('--lr', default=.001, type=float)
+    parser.add_argument('--batch-size', default=64, type=int)
     parser.add_argument('--num-workers', default=4, type=int)
-    parser.add_argument('--num-epochs', default=1000, type=int)
+    parser.add_argument('--num-epochs', default=10000, type=int)
     # criterion
     parser.add_argument('--repr-dim', default=512, type=int)
     parser.add_argument(
@@ -55,10 +61,16 @@ def common_args(parser):
     )
     parser.add_argument(
         '--criterion-lr',
-        default=.001,
+        default=.01,
         type=float,
         help='learning rate of criterion (effective if it has some learnable\
              parameter)'
+    )
+    parser.add_argument(
+        '--eval-interleaf',
+        default=10,
+        type=int,
+        help='every n epoch do a evaluation and report EER on tensorboard'
     )
     # log path
     parser.add_argument('--logdir', default='log', type=str)

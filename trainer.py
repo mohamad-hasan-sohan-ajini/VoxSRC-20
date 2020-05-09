@@ -13,6 +13,7 @@ from data_loader import ClassificationVCDS, MetricLearningVCDS, transform
 from model import UniversalSRModel
 from loss import CosFace, PSGE2E, Prototypical
 from utils import save_checkpoint, load_checkpoint
+from evaluation import EER_metric
 
 # add argparser functions
 parser = argparse.ArgumentParser(description='Training options')
@@ -29,7 +30,7 @@ else:
 # data loader
 if args.criterion_type == 'classification':
     ds = ClassificationVCDS(
-        args.csv_path,
+        args.dev_csv,
         args.win_length,
         args.hop_length,
         args.num_frames
@@ -37,7 +38,7 @@ if args.criterion_type == 'classification':
     args.num_spkr = len(ds)
 elif args.criterion_type == 'metriclearning':
     ds = MetricLearningVCDS(
-        args.csv_path,
+        args.dev_csv,
         args.win_length,
         args.hop_length,
         args.num_frames,
@@ -99,7 +100,7 @@ for epoch in range(args.num_epochs):
             # log the accuracy
             preds = scores.topk(1, dim=1)[1]
             log.add_scalar(
-                'acc',
+                'train-acc',
                 (preds == target).sum().item() / y.size(0),
                 counter
             )
@@ -113,8 +114,19 @@ for epoch in range(args.num_epochs):
         optimizer.step()
 
         # log the loss value
-        log.add_scalar('loss', loss.item(), counter)
+        log.add_scalar('train-loss', loss.item(), counter)
         counter += 1
+
+    if (epoch + 1) % args.eval_interleaf == 0:
+        eer = EER_metric(
+            model,
+            feature_extractor,
+            args.num_frames,
+            args.criterion,
+            device,
+            args.eval_csv
+        )
+        log.add_scalar('test-EER', eer, epoch + 1)
 
     # save model
     if args.save_checkpoint or epoch == args.num_epochs - 1:
