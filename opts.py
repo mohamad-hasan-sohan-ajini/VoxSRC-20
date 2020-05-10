@@ -61,7 +61,7 @@ def common_args(parser):
     )
     parser.add_argument(
         '--criterion-lr',
-        default=.01,
+        default=.001,
         type=float,
         help='learning rate of criterion (effective if it has some learnable\
              parameter)'
