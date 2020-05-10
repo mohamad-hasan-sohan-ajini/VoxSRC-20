@@ -3,6 +3,9 @@ import csv
 import torch
 import torch.nn as nn
 import torchaudio
+from scipy.optimize import brentq
+from scipy.interpolate import interp1d
+from sklearn.metrics import roc_curve
 
 
 def fix_length(signal, clip_length):
@@ -42,13 +45,19 @@ def utternace_repr(model, transform, num_frames, device, filepath):
 
 
 def cosine_based(rep0, rep1):
-    num = torch.dot(rep0, rep1)
-    denum = rep0.norm() * rep1.norm()
-    return num / denum
+    rep0 = rep0 / rep0.norm()
+    rep1 = rep1 / rep1.norm()
+    return -1 * (rep0 - rep1).norm()
 
 
 def distance_based(rep0, rep1):
     return -1 * (rep0 - rep1).norm()
+
+
+def compute_eer(labels, scores):
+    fpr, tpr, thresholds = roc_curve(labels, scores, pos_label=1)
+    eer = brentq(lambda x: 1. - x - interp1d(fpr, tpr)(x), 0., 1.)
+    return eer
 
 
 def EER_metric(model, transform, num_frames, criterion, device, eval_csv):
@@ -64,41 +73,14 @@ def EER_metric(model, transform, num_frames, criterion, device, eval_csv):
         sim_scorer = distance_based
 
     # calculate scores
-    L = len(eval_data)
-    labels = torch.FloatTensor(L)
-    scores = torch.FloatTensor(L)
+    labels, scores = [], []
     for ind, (label, utt0, utt1) in enumerate(eval_data):
-        labels[ind] = float(label)
+        labels.append(int(label))
 
         rep0 = utternace_repr(model, transform, num_frames, device, utt0)
         rep1 = utternace_repr(model, transform, num_frames, device, utt1)
-        scores[ind] = sim_scorer(rep0, rep1)
+        scores.append(sim_scorer(rep0, rep1).item())
 
-    # sort data according to similarity score
-    scores, index = scores.sort()
-    labels = labels[index]
-
-    # find eer
-    index = torch.LongTensor([labels.size(0) // 2])
-    step = index / 2
-    while True:
-        left_labels = labels[:index]
-        right_labels = labels[index:]
-
-        left_error_rate = left_labels.sum() / left_labels.size(0)
-        right_error_rate = (1 - right_labels).sum() / right_labels.size(0)
-
-        if left_error_rate > right_error_rate:
-            index -= step
-        elif left_error_rate < right_error_rate:
-            index += step
-        else:
-            break
-
-        step = step / 2
-        if step == 0:
-            break
-
-    eer = (left_error_rate+right_error_rate) / 2
+    eer = compute_eer(labels, scores)
     model.train()
-    return eer.item()
+    return eer
