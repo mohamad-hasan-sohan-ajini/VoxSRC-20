@@ -71,10 +71,10 @@ def compute_eer(labels, scores):
     return eer
 
 
-def EER_metric(model, transform, num_frames, criterion, device, eval_csv):
+def EER_metric(model, transform, num_frames, criterion, device, test_csv):
     model.eval()
 
-    with open(eval_csv) as f:
+    with open(test_csv) as f:
         eval_data = list(csv.reader(f, delimiter=' '))
 
     # select similarity measure based on criterion

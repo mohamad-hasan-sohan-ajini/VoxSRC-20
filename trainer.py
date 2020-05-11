@@ -117,14 +117,14 @@ for epoch in range(args.num_epochs):
         log.add_scalar('train-loss', loss.item(), counter)
         counter += 1
 
-    if (epoch + 1) % args.eval_interleaf == 0:
+    if (epoch + 1) % args.test_interleaf == 0:
         eer = EER_metric(
             model,
             feature_extractor,
             args.num_frames,
             args.criterion,
             device,
-            args.eval_csv
+            args.test_csv
         )
         log.add_scalar('test-EER', eer, epoch + 1)
 

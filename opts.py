@@ -10,7 +10,7 @@ def common_args(parser):
         help='training csv path'
     )
     parser.add_argument(
-        '--eval-csv',
+        '--test-csv',
         default='/media/aj/wav_test_list.txt',
         type=str,
         help='testing csv path'
@@ -67,7 +67,7 @@ def common_args(parser):
              parameter)'
     )
     parser.add_argument(
-        '--eval-interleaf',
+        '--test-interleaf',
         default=10,
         type=int,
         help='every n epoch do a evaluation and report EER on tensorboard'
