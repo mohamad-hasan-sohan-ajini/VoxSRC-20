@@ -103,7 +103,7 @@ if __name__ == '__main__':
     parser = add_args(parser)
     args = parser.parse_args()
     args.num_spkr = 118
-    args.model_path = 'checkpoints/model_10000.pt'
+    args.model_path = 'checkpoints/model_1050.pt'
     kwargs = vars(args)
 
     # device
@@ -119,7 +119,7 @@ if __name__ == '__main__':
     load_checkpoint(model, args.model_path, device)
     model.eval()
 
-    with open(args.eval_csv) as f:
+    with open(args.test_csv) as f:
         eval_data = list(csv.reader(f, delimiter=' '))
 
     reps, ids = [], []
