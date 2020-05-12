@@ -72,6 +72,7 @@ def compute_eer(labels, scores):
 
 
 def EER_metric(model, transform, num_frames, criterion, device, test_csv):
+    print('-' * 20 + f'EER evaluation' + '-' * 20)
     model.eval()
 
     with open(test_csv) as f:
@@ -85,7 +86,7 @@ def EER_metric(model, transform, num_frames, criterion, device, test_csv):
 
     # calculate scores
     labels, scores = [], []
-    for ind, (label, utt0, utt1) in enumerate(eval_data):
+    for ind, (label, utt0, utt1) in enumerate(tqdm(eval_data)):
         labels.append(int(label))
 
         rep0 = utternace_repr(model, transform, num_frames, device, utt0)

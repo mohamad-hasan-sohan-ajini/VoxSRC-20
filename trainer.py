@@ -86,7 +86,7 @@ load_checkpoint(optimizer, args.optimizer_path, device)
 # training loop
 counter = 0
 for epoch in range(args.num_epochs):
-    print('-' * 20 + f'epoch: {epoch+1:02d}' + '-' * 20)
+    print('-' * 20 + f'epoch: {epoch+1:03d}' + '-' * 20)
     for x, target in tqdm(dl):
         x = x.to(device)
         x = feature_extractor(x)
