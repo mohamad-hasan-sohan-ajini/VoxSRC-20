@@ -23,6 +23,9 @@ class UniversalSRModel(nn.Module):
         trunk_net = kwargs['trunk_net']
         polling_net = kwargs['polling_net']
 
+        # feat norm
+        self.instancenorm = nn.InstanceNorm2d(kwargs['num_filterbanks'])
+
         # trunk network
         if trunk_net == 'resnet':
             self.trunk = ResNet(layers=kwargs['layers'])
@@ -70,6 +73,7 @@ class UniversalSRModel(nn.Module):
         Returns:
             tensor of the shape: Nx(repr_dim)
         """
+        x = self.instancenorm(x)
         x = self.trunk(x)
         x = self.poll(x)
         x = self.repr_layer(x)
