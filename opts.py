@@ -49,7 +49,7 @@ def common_args(parser):
     # training hyper parameters
     parser.add_argument('--lr', default=.001, type=float)
     parser.add_argument('--batch-size', default=64, type=int)
-    parser.add_argument('--num-workers', default=4, type=int)
+    parser.add_argument('--num-workers', default=0, type=int)
     parser.add_argument('--num-epochs', default=10000, type=int)
     # criterion
     parser.add_argument('--repr-dim', default=512, type=int)

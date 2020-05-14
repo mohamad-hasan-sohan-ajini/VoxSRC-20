@@ -22,30 +22,34 @@ class VoxCelebDataset(Dataset):
         self.index2speaker = {ind: spk for ind, spk in enumerate(speaker_list)}
         self.speaker2index = {spk: ind for ind, spk in enumerate(speaker_list)}
 
+        # shared buffers
+        self.utt_buf = defaultdict(lambda: torch.zeros((1, 0)))
+        self.file_ind = defaultdict(int)
+
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, speaker_index):
         raise NotImplementedError('__getitem__ not implemented')
 
-    def fix_length(self, signal):
-        length = signal.size(1)
-        if length == self.clip_length:
-            return signal
-        lack = self.clip_length - length
-        pad_left = pad_right = lack // 2
-        pad_left += 1 if lack % 2 else 0
-        return F.pad(signal, (pad_left, pad_right))
+    def withdraw_buffer(self, spk):
+        sample = self.utt_buf[spk][:, :self.clip_length]
+        self.utt_buf[spk] = self.utt_buf[spk][:, self.clip_length:]
+        return sample
 
-    def load_audio(self, filepath):
-        x, sr = torchaudio.load(filepath)
-        # random crop
-        samples = min(self.clip_length, x.size(1))
-        starting = torch.randint(max(1, x.size(1) - samples), (1, ))
-        x = x[:, starting:starting+samples]
-        # fix length
-        x = self.fix_length(x)
-        return x
+    def fill_up_buffer(self, spk):
+        while self.utt_buf[spk].size(1) < self.clip_length:
+            # select file from speaker collection and update spk file index
+            spk_file_ind = self.file_ind[spk]
+            self.file_ind[spk] += 1
+            if self.file_ind[spk] == len(self.data[spk]):
+                self.file_ind[spk] = 0
+                random.shuffle(self.data[spk])
+            # load file
+            filename = self.data[spk][spk_file_ind]
+            x, sr = torchaudio.load(filename)
+            # extend the buffer
+            self.utt_buf[spk] = torch.cat([self.utt_buf[spk], x], dim=1)
 
 
 class ClassificationVCDS(VoxCelebDataset):
@@ -59,8 +63,8 @@ class ClassificationVCDS(VoxCelebDataset):
 
     def __getitem__(self, speaker_index):
         speaker = self.index2speaker[speaker_index]
-        filename = random.choice(self.data[speaker])
-        audio_segment = self.load_audio(filename)
+        self.fill_up_buffer(speaker)
+        audio_segment = self.withdraw_buffer(speaker)
         label = torch.LongTensor([speaker_index])
         return audio_segment, label
 
@@ -84,8 +88,10 @@ class MetricLearningVCDS(VoxCelebDataset):
 
     def __getitem__(self, speaker_index):
         speaker = self.index2speaker[speaker_index]
-        filenames = random.choices(self.data[speaker], k=self.spk_samples)
-        audio_segments = [self.load_audio(i) for i in filenames]
+        audio_segments = []
+        for i in range(self.spk_samples):
+            self.fill_up_buffer(speaker)
+            audio_segments.append(self.withdraw_buffer(speaker))
         label = torch.LongTensor([speaker_index])
         return audio_segments, label
 
@@ -110,7 +116,7 @@ if __name__ == '__main__':
         160,
         200
     )
-    dl = DataLoader(ds, batch_size=16, shuffle=True, num_workers=4)
+    dl = DataLoader(ds, batch_size=16, shuffle=True, num_workers=0)
     for x, y in tqdm(dl):
         pass
     print(x)
@@ -123,7 +129,7 @@ if __name__ == '__main__':
         200,
         5
     )
-    dl = DataLoader(ds, batch_size=16, shuffle=True, num_workers=4)
+    dl = DataLoader(ds, batch_size=16, shuffle=True, num_workers=0)
     for x, y in tqdm(dl):
         pass
     print(x)
