@@ -87,11 +87,22 @@ def EER_metric(model, transform, num_frames, criterion, device, test_csv):
 
     # calculate scores
     labels, scores = [], []
+    cache = {}
     for ind, (label, utt0, utt1) in enumerate(tqdm(eval_data)):
         labels.append(int(label))
 
-        rep0 = utternace_repr(model, transform, num_frames, device, utt0)
-        rep1 = utternace_repr(model, transform, num_frames, device, utt1)
+        if utt0 in cache.keys():
+            rep0 = cache[utt0]
+        else:
+            rep0 = utternace_repr(model, transform, num_frames, device, utt0)
+            cache[utt0] = rep0
+
+        if utt1 in cache.keys():
+            rep1 = cache[utt1]
+        else:
+            rep1 = utternace_repr(model, transform, num_frames, device, utt1)
+            cache[utt1] = rep1
+
         scores.append(sim_scorer(rep0, rep1).item())
 
     eer = compute_eer(labels, scores)
