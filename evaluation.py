@@ -48,7 +48,8 @@ def utternace_repr(model, transform, num_frames, device, filepath):
     # forward pass
     with torch.no_grad():
         x = x.to(device)
-        x = transform(x).unsqueeze(1)
+        x = transform(x).unsqueeze(1) + 1
+        x = x.log()
         x = model(x)
         x = x.mean(dim=0)
 

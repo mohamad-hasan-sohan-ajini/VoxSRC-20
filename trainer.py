@@ -89,7 +89,8 @@ for epoch in range(args.num_epochs):
     print('-' * 20 + f'epoch: {epoch+1:03d}' + '-' * 20)
     for x, target in tqdm(dl):
         x = x.to(device)
-        x = feature_extractor(x)
+        x = feature_extractor(x) + 1
+        x = x.log()
         target = target.to(device)
 
         # forward pass
