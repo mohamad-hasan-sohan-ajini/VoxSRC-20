@@ -45,8 +45,10 @@ class VoxCelebDataset(Dataset):
         filesize = int(tag.duration * tag.samplerate)
         if filesize >= filesize:
             # random crop
-            samples = min(self.clip_length, filesize)
-            starting = torch.randint(max(1, filesize - samples), (1, ))
+            starting = torch.randint(
+                max(1, filesize - self.clip_length),
+                (1, )
+            )
             x, sr = torchaudio.load(
                 filepath,
                 offset=starting,
