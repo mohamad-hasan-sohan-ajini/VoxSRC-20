@@ -50,7 +50,8 @@ dl = DataLoader(
     ds,
     batch_size=args.batch_size,
     shuffle=True,
-    num_workers=args.num_workers
+    num_workers=args.num_workers,
+    pin_memory=True
 )
 feature_extractor = transform(**kwargs).to(device)
 
