@@ -2,6 +2,7 @@ import os
 import csv
 from collections import defaultdict
 import random
+import json
 
 import torch
 import torch.nn.functional as F
@@ -24,12 +25,19 @@ class VoxCelebDataset(Dataset):
         self.speaker2index = {spk: ind for ind, spk in enumerate(speaker_list)}
 
         # read file sizes
-        self.filesize = {}
-        for file_list in tqdm(self.data.values()):
-            for filepath in file_list:
-                tag = TinyTag.get(filepath)
-                filesize = int(tag.duration * tag.samplerate)
-                self.filesize[filepath] = filesize
+        if filesize_json:
+            with open('filesize.json') as f:
+                self.filesize = json.load(f)
+        else:
+            print('read file tags...')
+            self.filesize = {}
+            for file_list in tqdm(self.data.values()):
+                for filepath in file_list:
+                    tag = TinyTag.get(filepath)
+                    filesize = int(tag.duration * tag.samplerate)
+                    self.filesize[filepath] = filesize
+            with open('filesize.json', 'w') as f:
+                json.dump(self.filesize, f)
 
     def __len__(self):
         return len(self.data)
@@ -75,8 +83,8 @@ class ClassificationVCDS(VoxCelebDataset):
 
     def __getitem__(self, speaker_index):
         speaker = self.index2speaker[speaker_index]
-        self.fill_up_buffer(speaker)
-        audio_segment = self.withdraw_buffer(speaker)
+        filename = random.choice(self.data[speaker])
+        audio_segment = self.load_audio(filename)
         label = torch.LongTensor([speaker_index])
         return audio_segment, label
 
@@ -100,10 +108,8 @@ class MetricLearningVCDS(VoxCelebDataset):
 
     def __getitem__(self, speaker_index):
         speaker = self.index2speaker[speaker_index]
-        audio_segments = []
-        for i in range(self.spk_samples):
-            self.fill_up_buffer(speaker)
-            audio_segments.append(self.withdraw_buffer(speaker))
+        filenames = random.choices(self.data[speaker], k=self.spk_samples)
+        audio_segments = [self.load_audio(i) for i in filenames]
         label = torch.LongTensor([speaker_index])
         return audio_segments, label
 
