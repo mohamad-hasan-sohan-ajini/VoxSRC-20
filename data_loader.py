@@ -8,6 +8,7 @@ import torch.nn.functional as F
 import torchaudio
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
+from tinytag import TinyTag
 
 
 class VoxCelebDataset(Dataset):
@@ -29,22 +30,29 @@ class VoxCelebDataset(Dataset):
         raise NotImplementedError('__getitem__ not implemented')
 
     def fix_length(self, signal):
-        length = signal.size(1)
-        if length == self.clip_length:
-            return signal
-        lack = self.clip_length - length
+        lack = self.clip_length - signal.size(1)
         pad_left = pad_right = lack // 2
         pad_left += 1 if lack % 2 else 0
         return F.pad(signal, (pad_left, pad_right))
 
     def load_audio(self, filepath):
-        x, sr = torchaudio.load(filepath)
-        # random crop
-        samples = min(self.clip_length, x.size(1))
-        starting = torch.randint(max(1, x.size(1) - samples), (1, ))
-        x = x[:, starting:starting+samples]
-        # fix length
-        x = self.fix_length(x)
+        # get duration
+        tag = TinyTag.get(filepath)
+        filesize = int(tag.duration * tag.samplerate)
+        if filesize >= filesize:
+            # random crop
+            samples = min(self.clip_length, filesize)
+            starting = torch.randint(max(1, filesize - samples), (1, ))
+            x, sr = torchaudio.load(
+                filepath,
+                offset=starting,
+                num_frames=self.clip_length
+            )
+        else:
+            # load whole audio
+            x, sr = torchaudio.load(filepath)
+            # fix length
+            x = self.fix_length(x)
         return x
 
 
