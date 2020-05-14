@@ -25,7 +25,7 @@ class VoxCelebDataset(Dataset):
         self.speaker2index = {spk: ind for ind, spk in enumerate(speaker_list)}
 
         # read file sizes
-        if filesize_json:
+        if os.path.exists('filesize.json'):
             with open('filesize.json') as f:
                 self.filesize = json.load(f)
         else:
