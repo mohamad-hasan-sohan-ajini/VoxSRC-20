@@ -23,9 +23,13 @@ class VoxCelebDataset(Dataset):
         self.index2speaker = {ind: spk for ind, spk in enumerate(speaker_list)}
         self.speaker2index = {spk: ind for ind, spk in enumerate(speaker_list)}
 
-        # shared buffers
-        self.utt_buf = defaultdict(lambda: torch.zeros((1, 0)))
-        self.file_ind = defaultdict(int)
+        # read file sizes
+        self.filesize = {}
+        for file_list in tqdm(self.data.values()):
+            for filepath in file_list:
+                tag = TinyTag.get(filepath)
+                filesize = int(tag.duration * tag.samplerate)
+                self.filesize[filepath] = filesize
 
     def __len__(self):
         return len(self.data)
@@ -41,23 +45,21 @@ class VoxCelebDataset(Dataset):
 
     def load_audio(self, filepath):
         # get duration
-        tag = TinyTag.get(filepath)
-        filesize = int(tag.duration * tag.samplerate)
-        if filesize >= filesize:
+        filesize = self.filesize[filepath]
+        if filesize >= self.clip_length:
             # random crop
-            starting = torch.randint(
+            offset = torch.randint(
                 max(1, filesize - self.clip_length),
                 (1, )
             )
             x, sr = torchaudio.load(
                 filepath,
-                offset=starting,
+                offset=offset,
                 num_frames=self.clip_length
             )
         else:
-            # load whole audio
+            # load whole audio and fix length
             x, sr = torchaudio.load(filepath)
-            # fix length
             x = self.fix_length(x)
         return x
 
