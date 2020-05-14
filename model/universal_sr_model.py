@@ -49,10 +49,6 @@ class UniversalSRModel(nn.Module):
         # representation layer
         self.repr_layer = nn.Sequential(
             nn.Dropout(.2),
-            nn.Linear(self.poll.hid_dim, self.poll.hid_dim),
-            nn.BatchNorm1d(self.poll.hid_dim),
-            nn.LeakyReLU(inplace=True),
-            nn.Dropout(.2),
             nn.Linear(self.poll.hid_dim, kwargs['repr_dim'])
         )
 
