@@ -16,7 +16,6 @@ class UniversalSRModel(nn.Module):
         repr_dim: dimension of speaker representation
 
         layers (resnet specific param): list of block in resnet layer
-
     """
     def __init__(self, **kwargs):
         super(UniversalSRModel, self).__init__()
@@ -47,13 +46,18 @@ class UniversalSRModel(nn.Module):
             raise ValueError('select a valid polling network')
 
         # representation layer
+        repr_dim = kwargs['repr_dim']
         self.repr_layer = nn.Sequential(
             nn.Dropout(.2),
-            nn.Linear(self.poll.hid_dim, kwargs['repr_dim'])
+            nn.Linear(self.poll.hid_dim, repr_dim),
+            nn.BatchNorm1d(repr_dim),
+            nn.LeakyReLU(inplace=True),
+            nn.Dropout(.2),
+            nn.Linear(repr_dim, repr_dim)
         )
 
     def prob_trunk_network(self, freqs, timesteps):
-        N, C = 4, 1
+        N, C = 1, 1
         with torch.no_grad():
             x = torch.rand((N, C, freqs, timesteps))
             x = self.trunk(x)
