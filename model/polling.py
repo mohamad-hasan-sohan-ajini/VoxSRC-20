@@ -15,8 +15,7 @@ class Polling(nn.Module):
     def __init__(self, channels, freqs, timesteps):
         super(Polling, self).__init__()
 
-        self.hid_dim = channels * freqs
-        self.timesteps = timesteps
+        self.hid_dim = channels
 
     def forward(self, x):
         """forward pass
@@ -36,8 +35,7 @@ class TAP(Polling):
         super(TAP, self).__init__(channels, freqs, timesteps)
 
     def forward(self, x):
-        x = x.view(-1, self.hid_dim, self.timesteps)
-        x = x.mean(dim=2)
+        x = x.mean(dim=2).mean(dim=2)
         return x
 
 
@@ -46,17 +44,15 @@ class SAP(Polling):
     def __init__(self, channels, freqs, timesteps):
         super(SAP, self).__init__(channels, freqs, timesteps)
 
-        self.main = nn.Sequential(
-            nn.Linear(self.hid_dim, self.hid_dim // 2),
-            nn.LeakyReLU(inplace=True),
-            nn.Linear(self.hid_dim // 2, 1)
-        )
+        self.sap_linear = nn.Linear(channels, channels)
+        w = nn.init.xavier_normal(torch.zeros(channels, 1))
+        self.attention = nn.Parameter(w)
         self.sm = nn.Softmax(dim=1)
 
     def forward(self, x):
-        y = x.view(-1, self.hid_dim, self.timesteps)
-        x = y.transpose(1, 2).contiguous().view(-1, self.hid_dim)
-        x = self.main(x)
-        x = x.view(-1, self.timesteps, 1)
-        x = torch.matmul(y, x).view(-1, self.hid_dim)
+        x = x.mean(dim=2).transpose(1, 2)
+        h = torch.tanh(self.sap_linear(x))
+        w = torch.matmul(h, self.attention)
+        w = self.sm(w)
+        x = torch.sum(x * w, dim=1)
         return x
