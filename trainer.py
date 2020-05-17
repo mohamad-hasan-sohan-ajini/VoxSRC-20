@@ -131,6 +131,6 @@ for epoch in range(args.num_epochs):
         log.add_scalar('test-EER', eer, epoch + 1)
 
         if args.save_checkpoint:
-            save_checkpoint(model, None, None, epoch)
+            save_checkpoint(model, criterion, optimizer, epoch)
 
 save_checkpoint(model, criterion, optimizer, epoch)
