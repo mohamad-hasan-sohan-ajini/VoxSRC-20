@@ -47,6 +47,55 @@ def conv1x1(in_planes, out_planes, stride=1):
     )
 
 
+class BasicBlock(nn.Module):
+    expansion = 1
+
+    def __init__(
+        self,
+        inplanes,
+        planes,
+        stride=1,
+        downsample=None,
+        groups=1,
+        base_width=64,
+        dilation=1,
+        norm_layer=None
+    ):
+        super(BasicBlock, self).__init__()
+        if norm_layer is None:
+            norm_layer = nn.BatchNorm2d
+        if groups != 1 or base_width != 64:
+            raise ValueError('BasicBlock only supports groups=1 and base_width=64')
+        if dilation > 1:
+            raise NotImplementedError("Dilation > 1 not supported in BasicBlock")
+        # Both self.conv1 and self.downsample layers downsample the input when stride != 1
+        self.conv1 = conv3x3(inplanes, planes, stride)
+        self.bn1 = norm_layer(planes)
+        self.relu = nn.LeakyReLU(inplace=True)
+        self.conv2 = conv3x3(planes, planes)
+        self.bn2 = norm_layer(planes)
+        self.downsample = downsample
+        self.stride = stride
+
+    def forward(self, x):
+        identity = x
+
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+
+        out = self.conv2(out)
+        out = self.bn2(out)
+
+        if self.downsample is not None:
+            identity = self.downsample(x)
+
+        out += identity
+        out = self.relu(out)
+
+        return out
+
+
 class Bottleneck(nn.Module):
     """Bottleneck in torchvision places the stride for downsampling at
     3x3 convolution(self.conv2) while original implementation places
@@ -58,7 +107,7 @@ class Bottleneck(nn.Module):
     pytorch.
     """
 
-    expansion = 4
+    expansion = 2
 
     def __init__(
         self,
@@ -113,7 +162,7 @@ class Bottleneck(nn.Module):
 class ResNet(Trunk):
     def __init__(
         self,
-        block=Bottleneck,
+        block=BasicBlock,
         layers=[3, 4, 6, 3],
         num_classes=1000,
         zero_init_residual=False,
@@ -127,7 +176,7 @@ class ResNet(Trunk):
             norm_layer = nn.BatchNorm2d
         self._norm_layer = norm_layer
 
-        self.inplanes = 64
+        self.inplanes = 16
         self.dilation = 1
         if replace_stride_with_dilation is None:
             # each element in the tuple indicates if we should replace
@@ -146,31 +195,31 @@ class ResNet(Trunk):
             1,
             self.inplanes,
             kernel_size=7,
-            stride=2,
+            stride=(2, 1),
             padding=3,
             bias=False
         )
         self.bn1 = norm_layer(self.inplanes)
         self.relu = nn.LeakyReLU(inplace=True)
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(block, 64, layers[0])
+
+        self.layer1 = self._make_layer(block, 16, layers[0])
         self.layer2 = self._make_layer(
             block,
-            128,
+            32,
             layers[1],
             stride=2,
             dilate=replace_stride_with_dilation[0]
         )
         self.layer3 = self._make_layer(
             block,
-            256,
+            64,
             layers[2],
-            stride=2,
+            stride=1,
             dilate=replace_stride_with_dilation[1]
         )
         self.layer4 = self._make_layer(
             block,
-            512,
+            128,
             layers[3],
             stride=2,
             dilate=replace_stride_with_dilation[2]
@@ -243,7 +292,6 @@ class ResNet(Trunk):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        x = self.maxpool(x)
 
         x = self.layer1(x)
         x = self.layer2(x)
