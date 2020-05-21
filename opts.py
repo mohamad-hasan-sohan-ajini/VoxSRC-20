@@ -113,6 +113,12 @@ def load_model_args(parser):
     return parser
 
 
+def scheduler(parser):
+    parser.add_argument('--step-size', default=5000, type=int)
+    parser.add_argument('--gamma', default=.75, type=float)
+    return parser
+
+
 def add_args(parser):
     parsers_functions = [
         common_args,
@@ -120,7 +126,8 @@ def add_args(parser):
         cosface_args,
         psge2e_args,
         prototypical_args,
-        load_model_args
+        load_model_args,
+        scheduler
     ]
     for parsers_function in parsers_functions:
         parser = parsers_function(parser)

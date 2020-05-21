@@ -84,6 +84,13 @@ optimizer = torch.optim.Adam(
 )
 load_checkpoint(optimizer, args.optimizer_path, device)
 
+# lr schedule
+scheduler = torch.optim.lr_scheduler.StepLR(
+    optimizer,
+    step_size=args.step_size,
+    gamma=args.gamma
+)
+
 # training loop
 counter = 0
 for epoch in range(args.num_epochs):
@@ -118,6 +125,10 @@ for epoch in range(args.num_epochs):
         # log the loss value
         log.add_scalar('train-loss', loss.item(), counter)
         counter += 1
+
+    scheduler.step()
+    lr = optimizer.state_dict()['param_groups'][0]['lr']
+    log.add_scalar('train-lr', lr, epoch + 1)
 
     if (epoch + 1) % args.test_interleaf == 0:
         eer = EER_metric(
