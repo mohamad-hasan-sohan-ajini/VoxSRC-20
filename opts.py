@@ -38,7 +38,7 @@ def common_args(parser):
         '--trunk-net',
         default='resnet',
         type=str,
-        help='trunk network type: (currently only) resnet'
+        help='trunk network type: resnet | resnetse'
     )
     parser.add_argument(
         '--polling-net',
