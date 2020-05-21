@@ -24,7 +24,8 @@ Take a look at `opts.py` to see the full options.
 
 ### Trunk Models
 ```
-resnet
+resnet34 (fewer stirdes)
+resnet34se
 ```
 
 ### Polling Layers
