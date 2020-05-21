@@ -1,3 +1,7 @@
+import torch
+import torch.nn as nn
+
+
 class SEBasicBlock(nn.Module):
     expansion = 1
 
