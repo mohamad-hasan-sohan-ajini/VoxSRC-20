@@ -110,6 +110,7 @@ def load_model_args(parser):
     parser.add_argument('--model-path', default='', type=str)
     parser.add_argument('--criterion-path', default='', type=str)
     parser.add_argument('--optimizer-path', default='', type=str)
+    parser.add_argument('--scheduler-path', default='', type=str)
     return parser
 
 

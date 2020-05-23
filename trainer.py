@@ -90,6 +90,7 @@ scheduler = torch.optim.lr_scheduler.StepLR(
     step_size=args.step_size,
     gamma=args.gamma
 )
+load_checkpoint(criterion, args.scheduler_path, device)
 
 # training loop
 counter = 0
@@ -142,6 +143,6 @@ for epoch in range(args.num_epochs):
         log.add_scalar('test-EER', eer, epoch + 1)
 
         if args.save_checkpoint:
-            save_checkpoint(model, criterion, optimizer, epoch)
+            save_checkpoint(model, criterion, optimizer, scheduler, epoch)
 
 save_checkpoint(model, criterion, optimizer, epoch)
