@@ -94,7 +94,7 @@ load_checkpoint(scheduler, args.scheduler_path, device)
 
 # training loop
 counter = 0
-for epoch in range(args.num_epochs):
+for epoch in range(scheduler.last_epoch, args.num_epochs):
     print('-' * 20 + f'epoch: {epoch+1:03d}' + '-' * 20)
     for x, target in tqdm(dl):
         x = x.to(device)
