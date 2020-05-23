@@ -90,7 +90,7 @@ scheduler = torch.optim.lr_scheduler.StepLR(
     step_size=args.step_size,
     gamma=args.gamma
 )
-load_checkpoint(criterion, args.scheduler_path, device)
+load_checkpoint(schedule, args.scheduler_path, device)
 
 # training loop
 counter = 0
