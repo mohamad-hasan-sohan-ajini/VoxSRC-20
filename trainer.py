@@ -145,4 +145,4 @@ for epoch in range(args.num_epochs):
         if args.save_checkpoint:
             save_checkpoint(model, criterion, optimizer, scheduler, epoch)
 
-save_checkpoint(model, criterion, optimizer, epoch)
+save_checkpoint(model, criterion, optimizer, scheduler, epoch)
