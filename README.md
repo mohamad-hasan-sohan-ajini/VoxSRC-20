@@ -26,6 +26,7 @@ Take a look at `opts.py` to see the full options.
 ```
 resnet34 (fewer stirdes)
 resnet34se
+TDS
 ```
 
 ### Polling Layers
