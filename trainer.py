@@ -84,17 +84,9 @@ optimizer = torch.optim.Adam(
 )
 load_checkpoint(optimizer, args.optimizer_path, device)
 
-# lr schedule
-scheduler = torch.optim.lr_scheduler.StepLR(
-    optimizer,
-    step_size=args.step_size,
-    gamma=args.gamma
-)
-load_checkpoint(scheduler, args.scheduler_path, device)
-
 # training loop
-counter = 0
-for epoch in range(scheduler.last_epoch, args.num_epochs):
+counter = args.start_epoch * len(dl)
+for epoch in range(args.start_epoch, args.num_epochs):
     print('-' * 20 + f'epoch: {epoch+1:03d}' + '-' * 20)
     for x, target in tqdm(dl):
         x = x.to(device)
@@ -127,10 +119,6 @@ for epoch in range(scheduler.last_epoch, args.num_epochs):
         log.add_scalar('train-loss', loss.item(), counter)
         counter += 1
 
-    scheduler.step()
-    lr = optimizer.state_dict()['param_groups'][0]['lr']
-    log.add_scalar('train-lr', lr, epoch + 1)
-
     if (epoch + 1) % args.test_interleaf == 0:
         eer = EER_metric(
             model,
@@ -143,6 +131,11 @@ for epoch in range(scheduler.last_epoch, args.num_epochs):
         log.add_scalar('test-EER', eer, epoch + 1)
 
         if args.save_checkpoint:
-            save_checkpoint(model, criterion, optimizer, scheduler, epoch)
+            save_checkpoint(model, criterion, optimizer, epoch)
 
-save_checkpoint(model, criterion, optimizer, scheduler, epoch)
+    if (epoch + 1) % args.step_size == 0:
+        print('lr anealing')
+        for g in optimizer.param_groups:
+            g['lr'] = g['lr'] * args.gamma
+
+save_checkpoint(model, criterion, optimizer, epoch)

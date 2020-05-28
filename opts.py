@@ -107,6 +107,7 @@ def prototypical_args(parser):
 
 
 def load_model_args(parser):
+    parser.add_argument('--start-epoch', default=0, type=int)
     parser.add_argument('--model-path', default='', type=str)
     parser.add_argument('--criterion-path', default='', type=str)
     parser.add_argument('--optimizer-path', default='', type=str)
