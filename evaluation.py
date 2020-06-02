@@ -67,7 +67,7 @@ def distance_based(rep0, rep1):
 
 
 def compute_eer(labels, scores):
-    fpr, tpr, thresholds = roc_curve(labels, scores, pos_label=1)
+    fpr, tpr, _ = roc_curve(labels, scores, pos_label=1)
     eer = brentq(lambda x: 1. - x - interp1d(fpr, tpr)(x), 0., 1.)
     return eer
 
@@ -86,9 +86,8 @@ def EER_metric(model, transform, num_frames, criterion, device, test_csv):
         sim_scorer = distance_based
 
     # calculate scores
-    labels, scores = [], []
-    cache = {}
-    for ind, (label, utt0, utt1) in enumerate(tqdm(eval_data)):
+    labels, scores, cache = [], [], {}
+    for label, utt0, utt1 in tqdm(eval_data):
         labels.append(int(label))
 
         if utt0 in cache.keys():
@@ -111,7 +110,7 @@ def EER_metric(model, transform, num_frames, criterion, device, test_csv):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Training options')
+    parser = argparse.ArgumentParser(description='Evaluation options')
     parser = add_args(parser)
     args = parser.parse_args()
     args.num_spkr = 118
@@ -144,7 +143,7 @@ if __name__ == '__main__':
             utt0
         )
         reps.append(rep0.cpu().numpy())
-        ids.append([i for i in utt0.split('/') if i.startswith('id0')][0])
+        ids.append([i for i in utt0.split('/') if i.startswith('id')][0])
 
         rep1 = utternace_repr(
             model,
@@ -154,7 +153,7 @@ if __name__ == '__main__':
             utt1
         )
         reps.append(rep1.cpu().numpy())
-        ids.append([i for i in utt1.split('/') if i.startswith('id0')][0])
+        ids.append([i for i in utt1.split('/') if i.startswith('id')][0])
 
     id_set = sorted(list(set(ids)))
     id_colors = [np.random.rand(3,) for i in id_set]
