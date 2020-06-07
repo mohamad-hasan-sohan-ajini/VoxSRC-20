@@ -50,7 +50,7 @@ class SAP(Polling):
         self.sm = nn.Softmax(dim=1)
 
     def forward(self, x):
-        x = x.mean(dim=2).transpose(1, 2)
+        x = x.mean(dim=2).transpose(1, 2).contiguous()
         h = torch.tanh(self.sap_linear(x))
         w = torch.matmul(h, self.attention)
         w = self.sm(w)
