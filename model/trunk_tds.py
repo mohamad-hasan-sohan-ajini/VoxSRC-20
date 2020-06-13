@@ -114,12 +114,12 @@ class TDSBlock(nn.Module):
 class TDSModel(nn.Module):
     def __init__(
         self,
-        channels,
-        blocks,
-        hidden_dims,
-        time_kernel_size,
-        freq_size,
-        dropout
+        channels=(10, 14, 18),
+        blocks=(5, 6, 7),
+        hidden_dims=(1500, 2100, 2700),
+        time_kernel_size=21,
+        freq_size=40,
+        dropout=.15
     ):
         super(TDSModel, self).__init__()
 
