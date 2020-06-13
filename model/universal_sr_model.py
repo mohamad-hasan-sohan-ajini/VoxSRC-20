@@ -3,6 +3,7 @@ import torch.nn as nn
 
 from .trunk_resnet import ResNet
 from .trunk_resnetse import ResNetSE
+from .trunk_tds import TDSModel
 from .polling import SAP, TAP
 
 
@@ -28,9 +29,14 @@ class UniversalSRModel(nn.Module):
 
         # trunk network
         if trunk_net == 'resnet':
+            print('resnet model instance')
             self.trunk = ResNet(layers=kwargs['layers'])
         elif trunk_net == 'resnetse':
+            print('resnet se model instance')
             self.trunk = ResNetSE(layers=kwargs['layers'])
+        elif trunk_net == 'tds':
+            print('tds model instance')
+            self.trunk = TDSModel()
         else:
             raise ValueError('select a valid trunk network')
 
