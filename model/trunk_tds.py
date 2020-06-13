@@ -213,19 +213,13 @@ class TDSModel(nn.Module):
             )
 
     def forward(self, x):
-        print(f'conv1: {x.size()}')
         x = self.conv1(x)
-        print(f'tds1: {x.size()}')
         x = self.tds1(x)
 
-        print(f'conv2: {x.size()}')
         x = self.conv2(x)
-        print(f'tds2: {x.size()}')
         x = self.tds2(x)
 
-        print(f'conv3: {x.size()}')
         x = self.conv3(x)
-        print(f'tds3: {x.size()}')
         x = self.tds3(x)
         return x
 
