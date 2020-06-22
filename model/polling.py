@@ -45,8 +45,9 @@ class SAP(Polling):
         super(SAP, self).__init__(channels, freqs, timesteps)
 
         self.sap_linear = nn.Linear(channels, channels)
-        w = nn.init.xavier_normal_(torch.zeros(channels, 1))
-        self.attention = nn.Parameter(w)
+        self.attention = nn.Parameter(
+            nn.init.xavier_normal_(torch.zeros(channels, 1))
+        )
         self.sm = nn.Softmax(dim=1)
 
     def forward(self, x):
