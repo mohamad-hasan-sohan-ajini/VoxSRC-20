@@ -89,9 +89,10 @@ counter = args.start_epoch * len(dl)
 for epoch in range(args.start_epoch, args.num_epochs):
     print('-' * 20 + f'epoch: {epoch+1:03d}' + '-' * 20)
     for x, target in tqdm(dl):
-        x = x.to(device)
-        x = feature_extractor(x) + 1
-        x = x.log()
+        with torch.no_grad():
+            x = x.to(device)
+            x = feature_extractor(x) + 1
+            x = x.log()
         target = target.to(device)
 
         # forward pass
@@ -132,10 +133,5 @@ for epoch in range(args.start_epoch, args.num_epochs):
 
         if args.save_checkpoint:
             save_checkpoint(model, criterion, optimizer, epoch)
-
-    if (epoch + 1) % args.step_size == 0:
-        print('lr anealing')
-        for g in optimizer.param_groups:
-            g['lr'] = g['lr'] * args.gamma
 
 save_checkpoint(model, criterion, optimizer, epoch)
