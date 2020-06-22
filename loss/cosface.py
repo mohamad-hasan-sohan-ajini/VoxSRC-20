@@ -6,8 +6,10 @@ class CosFace(nn.Module):
     def __init__(self, repr_dim, num_spkr, m, s):
         super(CosFace, self).__init__()
 
-        w = nn.init.xavier_normal_(torch.zeros((repr_dim, num_spkr)), gain=1)
-        self.w = nn.Parameter(w, requires_grad=True)
+        self.w = nn.Parameter(
+            nn.init.xavier_normal_(torch.zeros((repr_dim, num_spkr)), gain=1),
+            requires_grad=True
+        )
         self.m = m
         self.s = s
         self.ce = nn.CrossEntropyLoss()

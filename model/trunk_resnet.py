@@ -219,14 +219,14 @@ class ResNet(Trunk):
             block,
             64,
             layers[2],
-            stride=1,
+            stride=2,
             dilate=replace_stride_with_dilation[1]
         )
         self.layer4 = self._make_layer(
             block,
             128,
             layers[3],
-            stride=2,
+            stride=1,
             dilate=replace_stride_with_dilation[2]
         )
 
