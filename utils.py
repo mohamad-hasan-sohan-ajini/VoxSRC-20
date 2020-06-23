@@ -1,20 +1,22 @@
+import os
+
 import torch
 
 
-def save_checkpoint(model, criterion, optimizer, epoch):
+def save_checkpoint(save_path, model, criterion, optimizer, epoch):
     torch.save(
         model.state_dict(),
-        f'checkpoints/model_{epoch+1:05d}.pt'
+        os.path.join(save_path, f'model_{epoch+1:05d}.pt')
     )
     if criterion:
         torch.save(
             criterion.state_dict(),
-            f'checkpoints/criterion_{epoch+1:05d}.pt'
+            os.path.join(save_path, f'criterion_{epoch+1:05d}.pt')
         )
     if optimizer:
         torch.save(
             optimizer.state_dict(),
-            f'checkpoints/optimizer_{epoch+1:05d}.pt'
+            os.path.join(save_path, f'optimizer_{epoch+1:05d}.pt')
         )
 
 

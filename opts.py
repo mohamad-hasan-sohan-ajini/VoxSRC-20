@@ -76,6 +76,11 @@ def common_args(parser):
     parser.add_argument('--logdir', default='log', type=str)
     # saving results
     parser.add_argument('--save-checkpoint', action='store_true')
+    parser.add_argument(
+        '--save-path',
+        default='checkpoints',
+        action='store_true'
+    )
     return parser
 
 
