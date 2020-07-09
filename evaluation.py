@@ -53,7 +53,7 @@ def utternace_repr(model, transform, num_frames, device, filepath):
         x = model(x)
         x = x.mean(dim=0)
 
-    return x
+    return x.detach()
 
 
 def cosine_based(rep0, rep1):
