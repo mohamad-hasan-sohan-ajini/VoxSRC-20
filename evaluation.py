@@ -13,47 +13,30 @@ from sklearn.manifold import TSNE
 from matplotlib import pyplot as plt
 import numpy as np
 
-from opts import add_args
-from data_loader import ClassificationVCDS, MetricLearningVCDS, transform
+from opts import create_argparser
+from data_loader import VoxCelebDataset
 from model import UniversalSRModel
 from utils import save_checkpoint, load_checkpoint
 
 
-def fix_length(signal, clip_length):
-    length = signal.size(1)
-    if length == clip_length:
-        return signal
-    lack = clip_length - length
-    pad_left = pad_right = lack // 2
-    pad_left += 1 if lack % 2 else 0
-    return nn.functional.pad(signal, (pad_left, pad_right))
+def get_utternace_repr(filepath, repr_cache, model, device, ds):
+    if filepath in repr_cache:
+        return repr_cache[filepath]
 
-
-def utternace_repr(model, transform, num_frames, device, filepath):
-    clip_length = (num_frames-3) * transform.hop_length + transform.win_length
-    audio, sr = torchaudio.load(filepath)
-
-    # chunk file
-    samples = max(clip_length, audio.size(1))
-    steps = transform.sample_rate
-    startings = range(0, samples - steps, steps)
-
-    # create mini batch from chunks
-    x = torch.zeros((len(startings), clip_length))
-    for ind, start in enumerate(startings):
-        signal = audio[:, start:start + clip_length]
-        signal = fix_length(signal, clip_length)
-        x[ind] = signal
-
-    # forward pass
-    with torch.no_grad():
-        x = x.to(device)
-        x = transform(x).unsqueeze(1) + 1
-        x = x.log()
-        x = model(x)
-        x = x.mean(dim=0)
-
-    return x.detach()
+    feats = ds.feature_extractor.load_audio_4test(filepath).to(device)
+    timesteps = feats.size(1)
+    reprs = []
+    for start in torch.linspace(0, timesteps, 4):
+        start = start.int().item()
+        end = start + ds.feature_extractor.n_frames
+        if end < timesteps:
+            feat = feats[:, start:end]
+            feat.unsqueeze_(0).unsqueeze_(0)
+            with torch.no_grad():
+                reprs.append(model(feat).cpu().squeeze())
+    reprs = torch.stack(reprs).mean(0)
+    repr_cache[filepath] = reprs
+    return reprs
 
 
 def cosine_based(rep0, rep1):
@@ -72,37 +55,37 @@ def compute_eer(labels, scores):
     return eer
 
 
-def EER_metric(model, transform, num_frames, criterion, device, test_csv):
+def EER_metric(model, device, args):
     print('-' * 20 + f'EER evaluation' + '-' * 20)
     model.eval()
 
-    with open(test_csv) as f:
-        eval_data = list(csv.reader(f, delimiter=' '))
+    # data loader
+    ds = VoxCelebDataset(
+        args.sample_rate,
+        args.win_length,
+        args.hop_length,
+        args.n_frames,
+        args.n_fft,
+        args.n_filterbanks,
+        args.feat_type,
+        'eval',
+        args.eval_csv,
+        args.samples_per_speaker
+    )
 
     # select similarity measure based on criterion
-    if criterion in ['cosface', 'psge2e']:
+    if args.criterion in ['cosface', 'psge2e']:
         sim_scorer = cosine_based
-    elif criterion in ['prototypical']:
+    elif args.criterion in ['prototypical']:
         sim_scorer = distance_based
 
-    # calculate scores
-    labels, scores, cache = [], [], {}
-    for label, utt0, utt1 in tqdm(eval_data):
+    # calculate socres
+    labels, scores, repr_cache = [], [], {}
+    for label, filepath0, filepath1 in tqdm(ds):
+        repr0 = get_utternace_repr(filepath0, repr_cache, model, device, ds)
+        repr1 = get_utternace_repr(filepath1, repr_cache, model, device, ds)
         labels.append(int(label))
-
-        if utt0 in cache.keys():
-            rep0 = cache[utt0]
-        else:
-            rep0 = utternace_repr(model, transform, num_frames, device, utt0)
-            cache[utt0] = rep0
-
-        if utt1 in cache.keys():
-            rep1 = cache[utt1]
-        else:
-            rep1 = utternace_repr(model, transform, num_frames, device, utt1)
-            cache[utt1] = rep1
-
-        scores.append(sim_scorer(rep0, rep1).item())
+        scores.append(sim_scorer(repr0, repr1).item())
 
     eer = compute_eer(labels, scores)
     model.train()
@@ -110,9 +93,7 @@ def EER_metric(model, transform, num_frames, criterion, device, test_csv):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Evaluation options')
-    parser = add_args(parser)
-    args = parser.parse_args()
+    args = create_argparser().parse_args()
     args.num_spkr = 118
     args.model_path = 'checkpoints/model_1050.pt'
     kwargs = vars(args)

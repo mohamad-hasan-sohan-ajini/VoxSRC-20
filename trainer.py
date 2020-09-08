@@ -8,17 +8,15 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
-from opts import add_args
-from data_loader import ClassificationVCDS, MetricLearningVCDS, transform
+from opts import create_argparser
+from data_loader import VoxCelebDataset
 from model import UniversalSRModel
 from loss import CosFace, PSGE2E, Prototypical
 from utils import save_checkpoint, load_checkpoint
 from evaluation import EER_metric
 
 # add argparser functions
-parser = argparse.ArgumentParser(description='Training options')
-parser = add_args(parser)
-args = parser.parse_args()
+args = create_argparser().parse_args()
 kwargs = vars(args)
 
 # device
@@ -28,34 +26,32 @@ else:
     device = torch.device('cpu')
 
 # data loader
-if args.criterion_type == 'classification':
-    ds = ClassificationVCDS(
-        args.dev_csv,
-        args.win_length,
-        args.hop_length,
-        args.num_frames
-    )
-    args.num_spkr = len(ds)
-elif args.criterion_type == 'metriclearning':
-    ds = MetricLearningVCDS(
-        args.dev_csv,
-        args.win_length,
-        args.hop_length,
-        args.num_frames,
-        args.spk_samples
-    )
-else:
-    raise ValueError('args.criterion-type: no valid criterion type')
+ds = VoxCelebDataset(
+    args.sample_rate,
+    args.win_length,
+    args.hop_length,
+    args.n_frames,
+    args.n_fft,
+    args.n_filterbanks,
+    args.feat_type,
+    'dev',
+    args.dev_csv,
+    args.samples_per_speaker
+)
 dl = DataLoader(
     ds,
     batch_size=args.batch_size,
     shuffle=True,
     num_workers=args.num_workers
 )
-feature_extractor = transform(**kwargs).to(device)
+args.num_spkr = len(ds)
 
 # model
-model = UniversalSRModel(**kwargs)
+if args.feat_type == 'mel':
+    n_feat = args.n_filterbanks
+elif args.feat_type == 'spect':
+    n_feat = args.n_fft // 2 + 1
+model = UniversalSRModel(n_feat, **kwargs)
 model.to(device)
 load_checkpoint(model, args.model_path, device)
 
@@ -82,17 +78,15 @@ optimizer = torch.optim.Adam(
     ]
 )
 load_checkpoint(optimizer, args.optimizer_path, device)
+optimizer.zero_grad()
 
 # training loop
 counter = args.start_epoch * len(dl)
 for epoch in range(args.start_epoch, args.num_epochs):
     print('-' * 20 + f'epoch: {epoch+1:03d}' + '-' * 20)
     for x, target in tqdm(dl):
-        with torch.no_grad():
-            x = x.to(device)
-            x = feature_extractor(x) + 1
-            x = x.log().detach()
-        target = target.to(device)
+        x = x.view(-1, 1, n_feat, args.n_frames).to(device)
+        target = target.view(-1, 1).to(device)
 
         # forward pass
         y = model(x)
@@ -110,24 +104,17 @@ for epoch in range(args.start_epoch, args.num_epochs):
             # TODO: implement metriclearning methods
             pass
 
-        # updata weights
-        optimizer.zero_grad()
         loss.backward()
-        optimizer.step()
+        if (counter + 1) % args.update_interleaf == 0:
+            optimizer.step()
+            optimizer.zero_grad()
 
         # log the loss value
         log.add_scalar('train-loss', loss.item(), counter)
         counter += 1
 
     if (epoch + 1) % args.test_interleaf == 0:
-        eer = EER_metric(
-            model,
-            feature_extractor,
-            args.num_frames,
-            args.criterion,
-            device,
-            args.test_csv
-        )
+        eer = EER_metric(model, device, args)
         log.add_scalar('test-EER', eer, epoch + 1)
 
         if args.save_checkpoint:

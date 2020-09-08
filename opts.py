@@ -1,8 +1,23 @@
 import argparse
 
 
-def common_args(parser):
-    # dataset
+def feature_args(parser):
+    parser.add_argument('--sample-rate', default=16000, type=int)
+    parser.add_argument('--win-length', default=.025, type=float)
+    parser.add_argument('--hop-length', default=.01, type=float)
+    parser.add_argument('--n-frames', default=200, type=int)
+    parser.add_argument('--n-fft', default=512, type=int)
+    parser.add_argument('--n-filterbanks', default=40, type=int)
+    parser.add_argument(
+        '--feat-type',
+        default='spect',
+        type=str,
+        help='[mel | spect]'
+    )
+    return parser
+
+
+def dataset_args(parser):
     parser.add_argument(
         '--dev-csv',
         default='/media/aj/wav_train_list.txt',
@@ -10,76 +25,70 @@ def common_args(parser):
         help='training csv path'
     )
     parser.add_argument(
-        '--test-csv',
+        '--eval-csv',
         default='/media/aj/wav_test_list.txt',
         type=str,
         help='testing csv path'
     )
-    parser.add_argument('--sample-rate', default=16000, type=int)
-    parser.add_argument('--win-length', default=400, type=int)
-    parser.add_argument('--hop-length', default=160, type=int)
-    parser.add_argument('--num-frames', default=200, type=int)
     parser.add_argument(
-        '--criterion-type',
-        default='classification',
-        type=str,
-        help='specifies dataloader type according to loss type: cassification\
-             | metriclearning'
-    )
-    parser.add_argument(
-        '--spk-samples',
+        '--samples-per-speaker',
         default=2,
         type=int,
         help='num sample from each speaker in a minibatch'
     )
-    parser.add_argument('--num-filterbanks', default=40, type=int)
-    # model selection
+    return parser
+
+
+def model_args(parser):
     parser.add_argument(
         '--trunk-net',
         default='resnet',
         type=str,
-        help='trunk network type: resnet | resnetse'
+        help='trunk network type: [resnet | resnetse]'
     )
     parser.add_argument(
-        '--polling-net',
-        default='tap',
+        '--pooling-net',
+        default='sap',
         type=str,
-        help='polling network type: tap | sap'
+        help='pooling network type: [tap | sap]'
     )
-    # training hyper parameters
+    parser.add_argument('--repr-dim', default=512, type=int)
+    return parser
+
+
+def training_hyper_params(parser):
     parser.add_argument('--lr', default=.001, type=float)
-    parser.add_argument('--batch-size', default=64, type=int)
+    parser.add_argument('--batch-size', default=32, type=int)
     parser.add_argument('--num-workers', default=4, type=int)
     parser.add_argument('--num-epochs', default=10000, type=int)
-    # criterion
-    parser.add_argument('--repr-dim', default=512, type=int)
+    parser.add_argument('--update-interleaf', default=4, type=int)
+    return parser
+
+
+def criterion_args(parser):
+    parser.add_argument(
+        '--criterion-type',
+        default='classification',
+        type=str,
+        help=(
+            'specifies dataloader type according to loss type: [ cassification'
+            ' | metriclearning]'
+        )
+    )
     parser.add_argument(
         '--criterion',
         default='cosface',
         type=str,
-        help='criterion type: cosface | psge2e |  protypical'
+        help='criterion type: [cosface | psge2e |  protypical]'
     )
     parser.add_argument(
         '--criterion-lr',
         default=.001,
         type=float,
-        help='learning rate of criterion (effective if it has some learnable\
-             parameter)'
-    )
-    parser.add_argument(
-        '--test-interleaf',
-        default=10,
-        type=int,
-        help='every n epoch do a evaluation and report EER on tensorboard'
-    )
-    # log path
-    parser.add_argument('--logdir', default='log', type=str)
-    # saving results
-    parser.add_argument('--save-checkpoint', action='store_true')
-    parser.add_argument(
-        '--save-path',
-        default='checkpoints',
-        action='store_true'
+        help=(
+            'learning rate of criterion (effective if it has some learnable '
+            'parameter)'
+        )
     )
     return parser
 
@@ -126,15 +135,36 @@ def scheduler(parser):
     return parser
 
 
-def add_args(parser):
+def other_args(parser):
+    parser.add_argument(
+        '--test-interleaf',
+        default=10,
+        type=int,
+        help='every n epoch do a evaluation and report EER on tensorboard'
+    )
+    # log path
+    parser.add_argument('--logdir', default='log', type=str)
+    # saving results
+    parser.add_argument('--save-checkpoint', action='store_true')
+    parser.add_argument('--save-path', default='checkpoints')
+    return parser
+
+
+def create_argparser():
+    parser = argparse.ArgumentParser(description='Training options')
     parsers_functions = [
-        common_args,
+        feature_args,
+        dataset_args,
+        model_args,
+        training_hyper_params,
+        criterion_args,
         resnet_args,
         cosface_args,
         psge2e_args,
         prototypical_args,
         load_model_args,
-        scheduler
+        scheduler,
+        other_args,
     ]
     for parsers_function in parsers_functions:
         parser = parsers_function(parser)

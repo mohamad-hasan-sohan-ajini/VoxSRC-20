@@ -4,7 +4,7 @@ import torch.nn as nn
 from .trunk_resnet import ResNet
 from .trunk_resnetse import ResNetSE
 from .trunk_tds import TDSModel
-from .polling import SAP, TAP
+from .pooling import SAP, TAP
 
 
 class UniversalSRModel(nn.Module):
@@ -12,20 +12,17 @@ class UniversalSRModel(nn.Module):
 
     Args:
         trunk_net: trunk net type: resnet
-        polling_net: polling net type: sap, tap
+        pooling_net: pooling net type: sap, tap
         num_filterbanks: number of filterbank in transform
         num_frames: number of timesteps in minibatch
         repr_dim: dimension of speaker representation
 
         layers (resnet specific param): list of block in resnet layer
     """
-    def __init__(self, **kwargs):
+    def __init__(self, n_feat, **kwargs):
         super(UniversalSRModel, self).__init__()
         trunk_net = kwargs['trunk_net']
-        polling_net = kwargs['polling_net']
-
-        # feat norm
-        self.instancenorm = nn.InstanceNorm2d(kwargs['num_filterbanks'])
+        pooling_net = kwargs['pooling_net']
 
         # trunk network
         if trunk_net == 'resnet':
@@ -42,17 +39,17 @@ class UniversalSRModel(nn.Module):
 
         # prob trunk network
         pooling_args = self.prob_trunk_network(
-            kwargs['num_filterbanks'],
-            kwargs['num_frames']
+            n_feat,
+            kwargs['n_frames']
         )
 
         # pooling network
-        if polling_net == 'sap':
+        if pooling_net == 'sap':
             self.poll = SAP(*pooling_args)
-        elif polling_net == 'tap':
+        elif pooling_net == 'tap':
             self.poll = TAP(*pooling_args)
         else:
-            raise ValueError('select a valid polling network')
+            raise ValueError('select a valid pooling network')
 
         # representation layer
         repr_dim = kwargs['repr_dim']
@@ -82,7 +79,6 @@ class UniversalSRModel(nn.Module):
         Returns:
             tensor of the shape: Nx(repr_dim)
         """
-        x = self.instancenorm(x)
         x = self.trunk(x)
         x = self.poll(x)
         x = self.repr_layer(x)
