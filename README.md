@@ -4,11 +4,20 @@ Implementation of several loss functions and models to train speaker recognition
 
 
 ## Data Preparation
+### Dev csv
 Extract the data and create a csv formated file as follows:
 
 ```
 ID0 /full/path/to/wav
 ID1 /full/path/to/wav
+...
+```
+
+### Eval csv
+Eval csv is as the following format:
+```
+1 /full/path/to/spk_x/wav1 /full/path/to/spk_x/wav2
+0 /full/path/to/spk_x/wav1 /full/path/to/spk_y/wav1
 ...
 ```
 
@@ -24,7 +33,7 @@ Take a look at `opts.py` to see the full options.
 
 ### Trunk Models
 ```
-resnet34 (fewer stirdes)
+resnet34
 resnet34se
 TDS
 ```
@@ -44,3 +53,8 @@ protypical
 *psge2e (pseudo ge2e loss): Despite the original version, it learns the speakers representations.
 
 This repo is under heavy construction and the lists will be grown.
+
+
+### TODO
+- [ ] Add feature backend option: [librosa | torchaudio]
+- [ ] Add feature backend opiton: [CPU | GPU]
