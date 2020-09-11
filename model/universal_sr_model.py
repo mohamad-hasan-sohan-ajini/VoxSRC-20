@@ -46,10 +46,10 @@ class UniversalSRModel(nn.Module):
         # pooling network
         if pooling_net == 'sap':
             print('SAP pooling instance')
-            self.poll = SAP(*pooling_args)
+            self.pool = SAP(*pooling_args)
         elif pooling_net == 'tap':
             print('TAP pooling instance')
-            self.poll = TAP(*pooling_args)
+            self.pool = TAP(*pooling_args)
         else:
             raise ValueError('select a valid pooling network')
 
@@ -57,7 +57,7 @@ class UniversalSRModel(nn.Module):
         repr_dim = kwargs['repr_dim']
         self.repr_layer = nn.Sequential(
             nn.Dropout(.2),
-            nn.Linear(self.poll.hid_dim, repr_dim),
+            nn.Linear(self.pool.hid_dim, repr_dim),
             nn.BatchNorm1d(repr_dim),
             nn.LeakyReLU(inplace=True),
             nn.Dropout(.2),
@@ -82,6 +82,6 @@ class UniversalSRModel(nn.Module):
             tensor of the shape: Nx(repr_dim)
         """
         x = self.trunk(x)
-        x = self.poll(x)
+        x = self.pool(x)
         x = self.repr_layer(x)
         return x
