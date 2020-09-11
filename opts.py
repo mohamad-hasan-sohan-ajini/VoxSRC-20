@@ -130,8 +130,8 @@ def load_model_args(parser):
 
 
 def scheduler(parser):
-    parser.add_argument('--step-size', default=5000, type=int)
-    parser.add_argument('--gamma', default=.75, type=float)
+    parser.add_argument('--scheduler-step-size', default=1600, type=int)
+    parser.add_argument('--scheduler-gamma', default=.75, type=float)
     return parser
 
 
