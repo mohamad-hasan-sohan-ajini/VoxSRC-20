@@ -42,7 +42,8 @@ dl = DataLoader(
     ds,
     batch_size=args.batch_size,
     shuffle=True,
-    num_workers=args.num_workers
+    num_workers=args.num_workers,
+    pin_memory=True
 )
 args.num_spkr = len(ds)
 
@@ -83,7 +84,7 @@ optimizer.zero_grad()
 # training loop
 counter = args.start_epoch * len(dl)
 for epoch in range(args.start_epoch, args.num_epochs):
-    print('-' * 20 + f'epoch: {epoch+1:03d}' + '-' * 20)
+    print('-' * 20 + f'epoch: {epoch+1:05d}' + '-' * 20)
     for x, target in tqdm(dl):
         x = x.view(-1, 1, n_feat, args.n_frames).to(device)
         target = target.view(-1, 1).to(device)
