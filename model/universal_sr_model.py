@@ -45,8 +45,10 @@ class UniversalSRModel(nn.Module):
 
         # pooling network
         if pooling_net == 'sap':
+            print('SAP pooling instance')
             self.poll = SAP(*pooling_args)
         elif pooling_net == 'tap':
+            print('TAP pooling instance')
             self.poll = TAP(*pooling_args)
         else:
             raise ValueError('select a valid pooling network')

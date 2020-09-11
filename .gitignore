@@ -5,3 +5,4 @@ __pycache__/
 # folders
 log/
 checkpoints/
+data/
