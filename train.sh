@@ -1,1 +1,1 @@
-python3.8 trainer.py --save-checkpoint --dev-csv /media/data/voxceleb2_dev.csv --test-csv /media/data/voxceleb1_test.csv --batch-size 256 --test-interleaf 350
+python3 trainer.py --save-checkpoint --dev-csv /data/voxceleb2_dev.csv --eval-csv /data/voxceleb1_eval.csv --batch-size 16 --update-interleaf 17 --samples-per-speaker 3 --feat-type spect --test-interleaf 100 --num-epochs 500000 --n-frames 400

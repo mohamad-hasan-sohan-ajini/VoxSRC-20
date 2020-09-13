@@ -123,6 +123,7 @@ for epoch in range(args.start_epoch, args.num_epochs):
         counter += 1
 
     scheduler.step()
+    del x, target, y
     if (epoch + 1) % args.test_interleaf == 0:
         eer = EER_metric(model, device, args)
         log.add_scalar('test-EER', eer, epoch + 1)

@@ -18,6 +18,7 @@ from model import UniversalSRModel
 from utils import save_checkpoint, load_checkpoint
 
 
+@torch.no_grad()
 def get_utternace_repr(filepath, repr_cache, model, device, ds):
     if filepath in repr_cache:
         return repr_cache[filepath]
@@ -25,14 +26,16 @@ def get_utternace_repr(filepath, repr_cache, model, device, ds):
     feats = ds.feature_extractor.load_audio_4test(filepath).to(device)
     timesteps = feats.size(1)
     reprs = []
-    for start in torch.linspace(0, timesteps, 4):
+    for start in torch.linspace(0, timesteps, 5):
         start = start.int().item()
         end = start + ds.feature_extractor.n_frames
         if end < timesteps:
             feat = feats[:, start:end]
             feat.unsqueeze_(0).unsqueeze_(0)
-            with torch.no_grad():
-                reprs.append(model(feat).cpu().squeeze())
+            reprs.append(model(feat).cpu().squeeze())
+    if not reprs:
+        feat = feats.unsqueeze_(0).unsqueeze_(0)
+        reprs.append(model(feat).cpu().squeeze())
     reprs = torch.stack(reprs).mean(0)
     repr_cache[filepath] = reprs
     return reprs
