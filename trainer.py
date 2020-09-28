@@ -126,7 +126,14 @@ for epoch in range(args.start_epoch, args.num_epochs):
     del x, target, y
     if (epoch + 1) % args.test_interleaf == 0:
         if args.save_checkpoint:
-            save_checkpoint(args.save_path, model, criterion, optimizer, epoch)
+            save_checkpoint(
+                args.save_path,
+                model,
+                criterion,
+                optimizer,
+                scheduler,
+                epoch
+            )
         eer = EER_metric(model, device, args)
         log.add_scalar('test-EER', eer, epoch + 1)
 

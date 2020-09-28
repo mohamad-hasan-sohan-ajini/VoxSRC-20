@@ -3,7 +3,7 @@ import os
 import torch
 
 
-def save_checkpoint(save_path, model, criterion, optimizer, epoch):
+def save_checkpoint(save_path, model, criterion, optimizer, scheduler, epoch):
     torch.save(
         model.state_dict(),
         os.path.join(save_path, f'model_{epoch+1:05d}.pt')
@@ -17,6 +17,11 @@ def save_checkpoint(save_path, model, criterion, optimizer, epoch):
         torch.save(
             optimizer.state_dict(),
             os.path.join(save_path, f'optimizer_{epoch+1:05d}.pt')
+        )
+    if scheduler:
+        torch.save(
+            scheduler.state_dict(),
+            os.path.join(save_path, f'scheduler_{epoch+1:05d}.pt')
         )
 
 
