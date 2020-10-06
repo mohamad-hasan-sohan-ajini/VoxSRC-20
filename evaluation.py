@@ -96,8 +96,7 @@ def EER_metric(model, device, args):
 
 if __name__ == '__main__':
     args = create_argparser().parse_args()
-    args.num_spkr = 118
-    args.model_path = 'checkpoints/model_1050.pt'
+    args.model_path = 'checkpoints/model_04000.pt'
     kwargs = vars(args)
 
     # device
@@ -106,46 +105,18 @@ if __name__ == '__main__':
     else:
         device = torch.device('cpu')
 
-    feature_extractor = transform(**kwargs).to(device)
+    # num features
+    if args.feat_type == 'mel':
+        n_feat = args.n_filterbanks
+    elif args.feat_type == 'spect':
+        n_feat = args.n_fft // 2 + 1
 
-    model = UniversalSRModel(**kwargs)
+    model = UniversalSRModel(n_feat, **kwargs)
     model.to(device)
     load_checkpoint(model, args.model_path, device)
     model.eval()
 
-    with open(args.test_csv) as f:
+    with open(args.eval_csv) as f:
         eval_data = list(csv.reader(f, delimiter=' '))
 
-    reps, ids = [], []
-    for ind, (label, utt0, utt1) in enumerate(tqdm(eval_data)):
-        rep0 = utternace_repr(
-            model,
-            feature_extractor,
-            args.num_frames,
-            device,
-            utt0
-        )
-        reps.append(rep0.cpu().numpy())
-        ids.append([i for i in utt0.split('/') if i.startswith('id')][0])
-
-        rep1 = utternace_repr(
-            model,
-            feature_extractor,
-            args.num_frames,
-            device,
-            utt1
-        )
-        reps.append(rep1.cpu().numpy())
-        ids.append([i for i in utt1.split('/') if i.startswith('id')][0])
-
-    id_set = sorted(list(set(ids)))
-    id_colors = [np.random.rand(3,) for i in id_set]
-    ids_index = [id_set.index(i) for i in ids]
-
-    tsne = TSNE(n_components=2, random_state=0)
-    reps_2d = tsne.fit_transform(reps)
-
-    for spk_id, rep in zip(ids_index, reps_2d):
-        c = id_colors[spk_id]
-        plt.scatter(rep[0], rep[1], c=c)
-    plt.savefig('tmp.png', dpi=600)
+    result = EER_metric(model, device, args)
