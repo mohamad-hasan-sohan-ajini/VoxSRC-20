@@ -13,7 +13,7 @@ class Prototypical(nn.Module):
         self.ce = nn.CrossEntropyLoss()
 
     def forward(self, net_out, label):
-        """ calculate CosFace loss
+        """ calculate Prototypical loss
         inputs:
             net_out: of shape Nxrepr_size
             label: of size Nx1
