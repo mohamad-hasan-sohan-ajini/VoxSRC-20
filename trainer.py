@@ -137,4 +137,4 @@ for epoch in range(args.start_epoch, args.num_epochs):
         eer = EER_metric(model, device, args)
         log.add_scalar('test-EER', eer, epoch + 1)
 
-save_checkpoint(args.save_path, model, criterion, optimizer, epoch)
+save_checkpoint(args.save_path, model, criterion, optimizer, scheduler, epoch)
