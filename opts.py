@@ -14,6 +14,13 @@ def feature_args(parser):
         type=str,
         help='[mel | spect]'
     )
+    parser.add_argument('--musan-path', default='/data/musan', type=str)
+    parser.add_argument(
+        '--rir-path',
+        default='/data/RIRS_NOISES/simulated_rirs',
+        type=str
+    )
+    parser.add_argument('--augment-prob', default=.8, type=float)
     return parser
 
 
@@ -131,7 +138,7 @@ def load_model_args(parser):
 
 def scheduler(parser):
     parser.add_argument('--scheduler-step-size', default=1600, type=int)
-    parser.add_argument('--scheduler-gamma', default=.75, type=float)
+    parser.add_argument('--scheduler-gamma', default=.9, type=float)
     return parser
 
 

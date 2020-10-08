@@ -34,6 +34,9 @@ ds = VoxCelebDataset(
     args.n_fft,
     args.n_filterbanks,
     args.feat_type,
+    args.musan_path,
+    args.rir_path,
+    args.augmet_prob,
     'dev',
     args.dev_csv,
     args.samples_per_speaker
