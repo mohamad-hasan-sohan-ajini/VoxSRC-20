@@ -77,7 +77,7 @@ class SAP2(Pooling):
     def forward(self, x):
         # wighted freq reduction
         x = x.transpose(2, 3).contiguous()
-        x = torch.matmul(x, self.freq_reduction).unsqueeze()
+        x = torch.matmul(x, self.freq_reduction).squeeze(3)
         x = x.transpose(1, 2).contiguous()
 
         # self attention
