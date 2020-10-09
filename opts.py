@@ -57,7 +57,7 @@ def model_args(parser):
         '--pooling-net',
         default='sap',
         type=str,
-        help='pooling network type: [tap | sap]'
+        help='pooling network type: [tap | sap | sap2]'
     )
     parser.add_argument('--repr-dim', default=512, type=int)
     return parser
