@@ -307,6 +307,6 @@ class ResNet(Trunk):
 
 
 if __name__ == '__main__':
-    x = torch.rand((4, 1, 40, 200))
+    x = torch.rand((4, 1, 257, 200))
     model = ResNet()
     y = model(x)

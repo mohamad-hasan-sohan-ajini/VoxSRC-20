@@ -4,7 +4,7 @@ import torch.nn as nn
 from .trunk_resnet import ResNet
 from .trunk_resnetse import ResNetSE
 from .trunk_tds import TDSModel
-from .pooling import SAP, TAP
+from .pooling import SAP, SAP2, TAP
 
 
 class UniversalSRModel(nn.Module):
@@ -47,6 +47,9 @@ class UniversalSRModel(nn.Module):
         if pooling_net == 'sap':
             print('SAP pooling instance')
             self.pool = SAP(*pooling_args)
+        elif pooling_net == 'sap2':
+            print('SAP2 pooling instance')
+            self.pool = SAP2(*pooling_args)
         elif pooling_net == 'tap':
             print('TAP pooling instance')
             self.pool = TAP(*pooling_args)
